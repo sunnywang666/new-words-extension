@@ -1,6 +1,10 @@
-let tooltipHost = null;
+(function() {
+  if (window.__vocabExtLoaded) return;
+  window.__vocabExtLoaded = true;
 
-document.addEventListener('mouseup', (event) => {
+  let tooltipHost = null;
+
+  document.addEventListener('mouseup', (event) => {
   // Don't trigger if clicking inside our own tooltip
   if (tooltipHost && tooltipHost.contains(event.target)) {
     return;
@@ -140,15 +144,18 @@ function renderTooltipContent(container, word, definition, audioUrl, fullData) {
   }
 
   const saveBtn = container.querySelector('.vocab-save-btn');
-  saveBtn.addEventListener('click', () => {
-    console.log("Saved Vocabulary Data:", fullData);
-    
-    // Success animation
-    saveBtn.classList.add('vocab-saved');
-    saveBtn.innerHTML = `ʕ´• ᴥ•̥\`ʔ Saved!`;
-    
-    setTimeout(() => {
-      removeTooltip();
-    }, 2000);
-  });
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      console.log("Saved Vocabulary Data:", fullData);
+      
+      // Success animation
+      saveBtn.classList.add('vocab-saved');
+      saveBtn.innerHTML = `ʕ´• ᴥ•̥\`ʔ Saved!`;
+      
+      setTimeout(() => {
+        removeTooltip();
+      }, 2000);
+    });
+  }
 }
+})();

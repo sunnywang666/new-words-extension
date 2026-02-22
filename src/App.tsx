@@ -40,7 +40,7 @@ export default function App() {
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
-      delete (window as any).chrome;
+      (window as any).chrome = undefined;
     };
   }, []);
 
