@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 export default function App() {
   useEffect(() => {
     // Mock chrome API for the live preview environment
+    let mockStorage: any = { vocabList: [] };
     (window as any).chrome = {
       runtime: {
         getURL: (path: string) => {
@@ -26,6 +27,23 @@ export default function App() {
                 }
               })
               .catch(() => callback({ success: false }));
+          }
+        }
+      },
+      storage: {
+        local: {
+          get: (keys: any, callback: any) => {
+            callback(mockStorage);
+          },
+          set: (items: any, callback: any) => {
+            mockStorage = { ...mockStorage, ...items };
+            if (callback) callback();
+            
+            // Notify iframe to reload
+            const iframe = document.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+              iframe.contentWindow.postMessage('vocab-updated', '*');
+            }
           }
         }
       }
@@ -66,6 +84,27 @@ export default function App() {
             The extension files have been generated in the <code>/public/extension</code> folder. 
             You can download them and load them into Chrome via <code>chrome://extensions</code> (Developer mode -&gt; Load unpacked).
           </p>
+        </div>
+
+        <div className="mt-12">
+          <h3 className="text-xl font-bold mb-4 tracking-tight">Vocabulary Book Preview</h3>
+          <p className="text-gray-600 mb-4">
+            After saving some words above, you can see them in the extension popup below:
+          </p>
+          <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm" style={{ width: '320px', height: '450px' }}>
+            <iframe 
+              src="/extension/popup.html" 
+              className="w-full h-full border-none bg-white" 
+              title="Extension Popup Preview" 
+              onLoad={(e) => {
+                const iframeWindow = (e.target as HTMLIFrameElement).contentWindow;
+                if (iframeWindow) {
+                  (iframeWindow as any).chrome = (window as any).chrome;
+                  iframeWindow.postMessage('chrome-injected', '*');
+                }
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

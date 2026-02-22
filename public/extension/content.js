@@ -36,6 +36,55 @@ document.addEventListener('mousedown', (event) => {
   }
 });
 
+  // YouTube CC Support
+  document.addEventListener('click', (e) => {
+    if (window.location.hostname.includes('youtube.com')) {
+      const target = e.target;
+      if (target && target.closest) {
+        const captionSegment = target.closest('.ytp-caption-segment');
+        if (captionSegment && e.altKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          let word = "";
+          let rect = null;
+          
+          if (document.caretRangeFromPoint) {
+            const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+            if (range && range.startContainer.nodeType === Node.TEXT_NODE) {
+              const textNode = range.startContainer;
+              const offset = range.startOffset;
+              const text = textNode.textContent || "";
+              
+              // Find word boundaries
+              let start = offset;
+              while (start > 0 && /[a-zA-Z\-]/.test(text[start - 1])) {
+                start--;
+              }
+              let end = offset;
+              while (end < text.length && /[a-zA-Z\-]/.test(text[end])) {
+                end++;
+              }
+              
+              word = text.substring(start, end);
+              if (word) {
+                const wordRange = document.createRange();
+                wordRange.setStart(textNode, start);
+                wordRange.setEnd(textNode, end);
+                rect = wordRange.getBoundingClientRect();
+              }
+            }
+          }
+          
+          if (word) {
+            removeTooltip();
+            createTooltip(word, rect || captionSegment.getBoundingClientRect());
+          }
+        }
+      }
+    }
+  }, true); // Use capture phase
+
 function removeTooltip() {
   if (tooltipHost) {
     tooltipHost.remove();
@@ -107,12 +156,18 @@ function getFirstDefinition(data) {
 function getAudioUrl(data) {
   try {
     const phonetics = data.phonetics;
+    let usAudio = null;
+    let anyAudio = null;
+    
     for (let p of phonetics) {
       if (p.audio && p.audio !== "") {
-        return p.audio;
+        if (!anyAudio) anyAudio = p.audio;
+        if (p.audio.includes('-us.mp3') || (p.text && p.text.includes('US'))) {
+          usAudio = p.audio;
+        }
       }
     }
-    return null;
+    return usAudio || anyAudio;
   } catch (e) {
     return null;
   }
@@ -148,13 +203,36 @@ function renderTooltipContent(container, word, definition, audioUrl, fullData) {
     saveBtn.addEventListener('click', () => {
       console.log("Saved Vocabulary Data:", fullData);
       
-      // Success animation
-      saveBtn.classList.add('vocab-saved');
-      saveBtn.innerHTML = `ʕ´• ᴥ•̥\`ʔ Saved!`;
-      
-      setTimeout(() => {
-        removeTooltip();
-      }, 2000);
+      const wordData = {
+        word: word,
+        definition: definition,
+        timestamp: Date.now(),
+        audioUrl: audioUrl
+      };
+
+      chrome.storage.local.get({ vocabList: [] }, (result) => {
+        const vocabList = result.vocabList;
+        // Check if already exists
+        const exists = vocabList.find(item => item.word.toLowerCase() === word.toLowerCase());
+        if (!exists) {
+          vocabList.push(wordData);
+          chrome.storage.local.set({ vocabList: vocabList }, () => {
+            // Success animation
+            saveBtn.classList.add('vocab-saved');
+            saveBtn.innerHTML = `ʕ´• ᴥ•̥\`ʔ Saved!`;
+            
+            setTimeout(() => {
+              removeTooltip();
+            }, 2000);
+          });
+        } else {
+          saveBtn.classList.add('vocab-saved');
+          saveBtn.innerHTML = `Already Saved!`;
+          setTimeout(() => {
+            removeTooltip();
+          }, 2000);
+        }
+      });
     });
   }
 }
