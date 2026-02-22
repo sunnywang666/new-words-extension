@@ -1,0 +1,5 @@
+{
+  "name": "Vocab Acquisition Extension",
+  "description": "A minimalist Chrome extension that fetches English definitions and audio pronunciations when a word is selected.",
+  "requestFramePermissions": []
+}
