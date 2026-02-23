@@ -151,3 +151,29 @@
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
+
+/* Extension Popup Specific Styles */
+.vocab-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vocab-count {
+  font-size: 11px;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.vocab-context {
+  font-size: 12px;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 8px;
+  padding-left: 8px;
+  border-left: 2px solid #e5e7eb;
+  line-height: 1.4;
+}

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5] - 2026-02-23
+### Added
+- **Context Sentence**: The extension now extracts and saves the original sentence where the word appeared. This context is displayed in the vocabulary book.
+- **Save Count Tracking**: The extension now tracks how many times a word has been saved. If you save a word you've already saved before, its save count increments and it moves to the top of your list.
+
 ## [1.4] - 2026-02-23
 ### Performance
 - **Definition Caching**: Implemented persistent caching of dictionary definitions using `chrome.storage.local` to significantly reduce loading times for previously looked-up words. Added a 5-second timeout to API requests to prevent infinite loading states.

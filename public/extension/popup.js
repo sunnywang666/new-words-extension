@@ -39,14 +39,21 @@ function loadVocab() {
         month: 'short', day: 'numeric', year: 'numeric'
       });
       
+      const saveCount = item.saveCount > 1 ? `<span class="vocab-count">Saved ${item.saveCount}x</span>` : '';
+      const contextHtml = item.context ? `<div class="vocab-context">"${item.context}"</div>` : '';
+      
       const itemEl = document.createElement('div');
       itemEl.className = 'vocab-item';
       itemEl.innerHTML = `
         <div class="vocab-item-header">
           <h3 class="vocab-word">${item.word}</h3>
-          <span class="vocab-date">${date}</span>
+          <div class="vocab-meta">
+            ${saveCount}
+            <span class="vocab-date">${date}</span>
+          </div>
         </div>
         <p class="vocab-def">${item.definition}</p>
+        ${contextHtml}
         <div class="vocab-actions">
           <button class="delete-btn" data-word="${item.word}">Delete</button>
         </div>

@@ -4,6 +4,22 @@
 
   let tooltipHost = null;
 
+  // Helper to extract context sentence
+  function getContextSentence(word, text) {
+    if (!text) return "";
+    text = text.replace(/\s+/g, ' ').trim();
+    const index = text.toLowerCase().indexOf(word.toLowerCase());
+    if (index === -1) {
+      return text.length > 120 ? text.substring(0, 120) + "..." : text;
+    }
+    const start = Math.max(0, index - 50);
+    const end = Math.min(text.length, index + word.length + 50);
+    let result = text.substring(start, end);
+    if (start > 0) result = "..." + result;
+    if (end < text.length) result = result + "...";
+    return result;
+  }
+
   document.addEventListener('mouseup', (event) => {
   // Don't trigger if clicking inside our own tooltip
   if (tooltipHost && tooltipHost.contains(event.target)) {
@@ -22,12 +38,20 @@
     return;
   }
 
+  let fullText = "";
+  if (selection.anchorNode) {
+    let node = selection.anchorNode;
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+    fullText = node.innerText || node.textContent || "";
+  }
+  const contextSentence = getContextSentence(selectedText, fullText);
+
   // Get bounding rect of selection to position the tooltip
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
 
   // Create tooltip container
-  createTooltip(selectedText, rect);
+  createTooltip(selectedText, rect, contextSentence);
 });
 
 document.addEventListener('mousedown', (event) => {
@@ -121,7 +145,9 @@ document.addEventListener('mousedown', (event) => {
           
           if (word) {
             removeTooltip();
-            createTooltip(word, rect || captionSegment.getBoundingClientRect());
+            let fullText = captionSegment ? (captionSegment.innerText || captionSegment.textContent || "") : "";
+            const contextSentence = getContextSentence(word, fullText);
+            createTooltip(word, rect || captionSegment.getBoundingClientRect(), contextSentence);
           }
         }
       }
@@ -139,7 +165,7 @@ function removeTooltip() {
   }
 }
 
-function createTooltip(word, rect) {
+function createTooltip(word, rect, contextSentence = "") {
   if (!chrome || !chrome.runtime || !chrome.runtime.getURL) {
     console.warn("Extension context invalidated. Please refresh the page.");
     return;
@@ -187,7 +213,7 @@ function createTooltip(word, rect) {
     const definition = getFirstDefinition(data);
     const audioUrl = getAudioUrl(data);
 
-    renderTooltipContent(container, word, definition, audioUrl, data);
+    renderTooltipContent(container, word, definition, audioUrl, data, contextSentence);
   });
 }
 
@@ -225,7 +251,7 @@ function getAudioUrl(data) {
   }
 }
 
-function renderTooltipContent(container, word, definition, audioUrl, fullData) {
+function renderTooltipContent(container, word, definition, audioUrl, fullData, contextSentence) {
   container.innerHTML = `
     <div class="vocab-header">
       <span class="vocab-word">${word}</span>
@@ -259,7 +285,9 @@ function renderTooltipContent(container, word, definition, audioUrl, fullData) {
         word: word,
         definition: definition,
         timestamp: Date.now(),
-        audioUrl: audioUrl
+        audioUrl: audioUrl,
+        context: contextSentence,
+        saveCount: 1
       };
 
       if (!chrome.storage || !chrome.storage.local) {
@@ -270,9 +298,9 @@ function renderTooltipContent(container, word, definition, audioUrl, fullData) {
 
       chrome.storage.local.get({ vocabList: [] }, (result) => {
         const vocabList = result.vocabList || [];
-        // Check if already exists
-        const exists = vocabList.find(item => item.word.toLowerCase() === word.toLowerCase());
-        if (!exists) {
+        const existingIndex = vocabList.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
+        
+        if (existingIndex === -1) {
           vocabList.push(wordData);
           chrome.storage.local.set({ vocabList: vocabList }, () => {
             // Success animation
@@ -284,11 +312,18 @@ function renderTooltipContent(container, word, definition, audioUrl, fullData) {
             }, 2000);
           });
         } else {
-          saveBtn.classList.add('vocab-saved');
-          saveBtn.innerHTML = `Already Saved!`;
-          setTimeout(() => {
-            removeTooltip();
-          }, 2000);
+          vocabList[existingIndex].saveCount = (vocabList[existingIndex].saveCount || 1) + 1;
+          vocabList[existingIndex].timestamp = Date.now();
+          if (contextSentence) {
+            vocabList[existingIndex].context = contextSentence;
+          }
+          chrome.storage.local.set({ vocabList: vocabList }, () => {
+            saveBtn.classList.add('vocab-saved');
+            saveBtn.innerHTML = `Saved (${vocabList[existingIndex].saveCount} times)!`;
+            setTimeout(() => {
+              removeTooltip();
+            }, 2000);
+          });
         }
       });
     });
