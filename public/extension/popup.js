@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadVocab() {
   chrome.storage.local.get({ vocabList: [] }, (result) => {
-    const vocabList = result.vocabList;
+    const vocabList = result.vocabList || [];
     const listContainer = document.getElementById('vocab-list');
     const countSpan = document.getElementById('word-count');
     
@@ -67,7 +67,7 @@ function loadVocab() {
 
 function deleteWord(word) {
   chrome.storage.local.get({ vocabList: [] }, (result) => {
-    const vocabList = result.vocabList.filter(item => item.word !== word);
+    const vocabList = (result.vocabList || []).filter(item => item.word !== word);
     chrome.storage.local.set({ vocabList: vocabList }, () => {
       loadVocab();
     });

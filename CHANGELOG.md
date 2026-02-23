@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2] - 2026-02-22
+### Fixed
+- **Vocabulary Book Saving**: Fixed an issue where words were not properly saved to `chrome.storage.local` and the vocabulary book displayed 0 words. Added fallback arrays and robust storage checks.
+- **YouTube CC Support**: Fixed the Alt+Click interaction on YouTube subtitles. The extension now properly intercepts `mousedown`, `mouseup`, and `click` events in the capture phase to prevent the YouTube video from pausing when selecting a word.
+
 ## [1.1] - 2026-02-21
 ### Added
 - **US American Pronunciation**: The extension now prioritizes US English audio pronunciation (`-us.mp3`) from the Free Dictionary API.

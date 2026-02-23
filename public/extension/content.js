@@ -36,42 +36,85 @@ document.addEventListener('mousedown', (event) => {
   }
 });
 
-  // YouTube CC Support
-  document.addEventListener('click', (e) => {
-    if (window.location.hostname.includes('youtube.com')) {
-      const target = e.target;
-      if (target && target.closest) {
-        const captionSegment = target.closest('.ytp-caption-segment');
-        if (captionSegment && e.altKey) {
-          e.preventDefault();
-          e.stopPropagation();
-          
+  // YouTube CC Support (intercept mousedown, mouseup, click)
+  function handleYouTubeCaptionEvent(e) {
+    // In preview mode, we might not be on youtube.com, so we check for the class instead
+    const isYouTube = window.location.hostname.includes('youtube.com') || document.querySelector('.ytp-caption-segment');
+    if (!isYouTube) return;
+
+    const target = e.target;
+    if (target && target.closest) {
+      const captionSegment = target.closest('.ytp-caption-segment');
+      if (captionSegment && e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (e.type === 'mouseup') {
           let word = "";
           let rect = null;
           
+          let textNode = null;
+          let offset = 0;
+
           if (document.caretRangeFromPoint) {
             const range = document.caretRangeFromPoint(e.clientX, e.clientY);
-            if (range && range.startContainer.nodeType === Node.TEXT_NODE) {
-              const textNode = range.startContainer;
-              const offset = range.startOffset;
-              const text = textNode.textContent || "";
-              
-              // Find word boundaries
-              let start = offset;
-              while (start > 0 && /[a-zA-Z\-]/.test(text[start - 1])) {
-                start--;
-              }
-              let end = offset;
-              while (end < text.length && /[a-zA-Z\-]/.test(text[end])) {
-                end++;
-              }
-              
-              word = text.substring(start, end);
-              if (word) {
-                const wordRange = document.createRange();
+            if (range) {
+              textNode = range.startContainer;
+              offset = range.startOffset;
+            }
+          } else if (document.caretPositionFromPoint) {
+            const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+            if (pos) {
+              textNode = pos.offsetNode;
+              offset = pos.offset;
+            }
+          }
+          
+          // If we clicked an element instead of a text node, try to get its first text node child
+          if (textNode && textNode.nodeType !== Node.TEXT_NODE) {
+            // Just a fallback, might not be perfectly accurate for offset
+            if (textNode.childNodes.length > 0 && textNode.childNodes[0].nodeType === Node.TEXT_NODE) {
+              textNode = textNode.childNodes[0];
+              offset = 0; // fallback offset
+            }
+          }
+
+          if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+            const text = textNode.textContent || "";
+            
+            // Find word boundaries
+            let start = offset;
+            while (start > 0 && /[a-zA-Z\-]/.test(text[start - 1])) {
+              start--;
+            }
+            let end = offset;
+            while (end < text.length && /[a-zA-Z\-]/.test(text[end])) {
+              end++;
+            }
+            
+            word = text.substring(start, end).trim();
+            if (word && /^[a-zA-Z\-]+$/.test(word)) {
+              const wordRange = document.createRange();
+              try {
                 wordRange.setStart(textNode, start);
                 wordRange.setEnd(textNode, end);
                 rect = wordRange.getBoundingClientRect();
+              } catch (err) {
+                console.error("Range error", err);
+              }
+            }
+          }
+          
+          // Fallback if caret extraction failed but we have a word from selection or innerText
+          if (!word) {
+            const selText = window.getSelection().toString().trim();
+            if (selText && /^[a-zA-Z\-]+$/.test(selText)) {
+              word = selText;
+            } else {
+              // Last resort: just take the whole segment text if it's a single word
+              const segmentText = captionSegment.textContent.trim();
+              if (/^[a-zA-Z\-]+$/.test(segmentText)) {
+                word = segmentText;
               }
             }
           }
@@ -83,7 +126,11 @@ document.addEventListener('mousedown', (event) => {
         }
       }
     }
-  }, true); // Use capture phase
+  }
+
+  document.addEventListener('mousedown', handleYouTubeCaptionEvent, true);
+  document.addEventListener('mouseup', handleYouTubeCaptionEvent, true);
+  document.addEventListener('click', handleYouTubeCaptionEvent, true);
 
 function removeTooltip() {
   if (tooltipHost) {
@@ -210,8 +257,14 @@ function renderTooltipContent(container, word, definition, audioUrl, fullData) {
         audioUrl: audioUrl
       };
 
+      if (!chrome.storage || !chrome.storage.local) {
+        console.error("Storage API not available. Please reload the extension.");
+        saveBtn.innerHTML = `Error: No Storage`;
+        return;
+      }
+
       chrome.storage.local.get({ vocabList: [] }, (result) => {
-        const vocabList = result.vocabList;
+        const vocabList = result.vocabList || [];
         // Check if already exists
         const exists = vocabList.find(item => item.word.toLowerCase() === word.toLowerCase());
         if (!exists) {

@@ -8,9 +8,13 @@ import { useEffect } from 'react';
 export default function App() {
   useEffect(() => {
     // Mock chrome API for the live preview environment
+    const existingChrome = (window as any).chrome || {};
     let mockStorage: any = { vocabList: [] };
+    
     (window as any).chrome = {
+      ...existingChrome,
       runtime: {
+        ...existingChrome.runtime,
         getURL: (path: string) => {
           if (path === 'styles.css') return '/extension/styles.css';
           return path;
@@ -31,6 +35,7 @@ export default function App() {
         }
       },
       storage: {
+        ...existingChrome.storage,
         local: {
           get: (keys: any, callback: any) => {
             callback(mockStorage);
@@ -84,6 +89,18 @@ export default function App() {
             The extension files have been generated in the <code>/public/extension</code> folder. 
             You can download them and load them into Chrome via <code>chrome://extensions</code> (Developer mode -&gt; Load unpacked).
           </p>
+        </div>
+
+        <div className="mt-12 p-6 bg-gray-900 rounded-2xl text-white">
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">YouTube CC Test</h3>
+          <p className="text-sm text-gray-300 mb-4">
+            Hold <kbd className="bg-gray-800 px-2 py-1 rounded border border-gray-700">Alt</kbd> (or Option) and click a word in the subtitle below to test the YouTube CC support:
+          </p>
+          <div className="relative bg-black aspect-video rounded-lg flex items-end justify-center pb-8 border border-gray-800">
+            <div className="ytp-caption-segment bg-black/80 text-white px-4 py-2 rounded text-xl cursor-pointer select-none">
+              This is a ubiquitous and pragmatic example.
+            </div>
+          </div>
         </div>
 
         <div className="mt-12">
