@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9] - 2026-02-23
+### Changed
+- **Vocabulary Book UI Redesign**: Modernized the popup UI with a sophisticated highlight style (creamy off-white background with a subtle blue underscore), improved typography and visual hierarchy, softer card shadows, increased padding, and a subtler delete button.
+
 ## [1.8] - 2026-02-23
 ### Fixed
 - **Sentence Extraction Bug**: Fixed an issue where the extension was grabbing truncated fragments instead of complete sentences. The extraction logic now uses a regular expression to extract the complete sentence containing the selected word from the closest block-level parent element.
