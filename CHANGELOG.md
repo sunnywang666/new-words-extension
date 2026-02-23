@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4] - 2026-02-23
+### Performance
+- **Definition Caching**: Implemented persistent caching of dictionary definitions using `chrome.storage.local` to significantly reduce loading times for previously looked-up words. Added a 5-second timeout to API requests to prevent infinite loading states.
+
 ## [1.3] - 2026-02-23
 ### Fixed
 - **Extension Context Invalidated**: Fixed `Uncaught TypeError: Cannot read properties of undefined (reading 'getURL')` by checking if `chrome.runtime` exists before creating the tooltip.
