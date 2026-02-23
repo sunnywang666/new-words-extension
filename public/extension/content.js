@@ -140,6 +140,11 @@ function removeTooltip() {
 }
 
 function createTooltip(word, rect) {
+  if (!chrome || !chrome.runtime || !chrome.runtime.getURL) {
+    console.warn("Extension context invalidated. Please refresh the page.");
+    return;
+  }
+
   tooltipHost = document.createElement('div');
   tooltipHost.id = 'vocab-ext-host';
   

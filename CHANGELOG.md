@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3] - 2026-02-23
+### Fixed
+- **Extension Context Invalidated**: Fixed `Uncaught TypeError: Cannot read properties of undefined (reading 'getURL')` by checking if `chrome.runtime` exists before creating the tooltip.
+
 ## [1.2] - 2026-02-22
 ### Fixed
 - **Vocabulary Book Saving**: Fixed an issue where words were not properly saved to `chrome.storage.local` and the vocabulary book displayed 0 words. Added fallback arrays and robust storage checks.
