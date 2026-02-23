@@ -42,6 +42,13 @@
   if (selection.anchorNode) {
     let node = selection.anchorNode;
     if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+    
+    // Traverse up to find a block-level element
+    const blockElements = ['P', 'DIV', 'ARTICLE', 'SECTION', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'TD', 'TH'];
+    while (node && node.parentElement && !blockElements.includes(node.tagName.toUpperCase())) {
+      node = node.parentElement;
+    }
+    
     fullText = node.innerText || node.textContent || "";
   }
   const contextSentence = getContextSentence(selectedText, fullText);
@@ -203,17 +210,30 @@ function createTooltip(word, rect, contextSentence = "") {
   document.body.appendChild(tooltipHost);
 
   // Fetch definition
-  chrome.runtime.sendMessage({ action: "fetchDefinition", word: word }, (response) => {
+  chrome.runtime.sendMessage({ action: "fetchDefinition", word: word, contextSentence: contextSentence }, (response) => {
     if (chrome.runtime.lastError || !response || !response.success) {
       container.innerHTML = `<div class="vocab-error">Definition not found.</div>`;
       return;
     }
 
     const data = response.data[0];
-    const definition = getFirstDefinition(data);
-    const audioUrl = getAudioUrl(data);
+    const definition = response.bestDefinition || getFirstDefinition(data);
 
-    renderTooltipContent(container, word, definition, audioUrl, data, contextSentence);
+    // Query storage for save count
+    chrome.storage.local.get({ vocabList: [] }, (result) => {
+      const vocabList = result.vocabList || [];
+      const existingWordEntry = vocabList.find(item => item.word.toLowerCase() === word.toLowerCase());
+      
+      let saveCount = 0;
+      if (existingWordEntry && existingWordEntry.entries) {
+        saveCount = existingWordEntry.entries.reduce((sum, entry) => sum + (entry.sentences ? entry.sentences.length : 0), 0);
+      } else if (existingWordEntry) {
+        // Legacy format
+        saveCount = existingWordEntry.saveCount || 1;
+      }
+
+      renderTooltipContent(container, word, definition, contextSentence, saveCount);
+    });
   });
 }
 
@@ -251,45 +271,22 @@ function getAudioUrl(data) {
   }
 }
 
-function renderTooltipContent(container, word, definition, audioUrl, fullData, contextSentence) {
+function renderTooltipContent(container, word, definition, contextSentence, saveCount) {
+  const saveText = saveCount > 0 ? `Save (${saveCount})` : `Save`;
+
   container.innerHTML = `
     <div class="vocab-header">
       <span class="vocab-word">${word}</span>
-      ${audioUrl ? `<button class="vocab-audio-btn" title="Play Audio">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-        </svg>
-      </button>` : ''}
     </div>
     <div class="vocab-def">${definition}</div>
     <div class="vocab-footer">
-      <button class="vocab-save-btn">Save</button>
+      <button class="vocab-save-btn">${saveText}</button>
     </div>
   `;
-
-  if (audioUrl) {
-    const audioBtn = container.querySelector('.vocab-audio-btn');
-    const audio = new Audio(audioUrl);
-    audioBtn.addEventListener('click', () => {
-      audio.play();
-    });
-  }
 
   const saveBtn = container.querySelector('.vocab-save-btn');
   if (saveBtn) {
     saveBtn.addEventListener('click', () => {
-      console.log("Saved Vocabulary Data:", fullData);
-      
-      const wordData = {
-        word: word,
-        definition: definition,
-        timestamp: Date.now(),
-        audioUrl: audioUrl,
-        context: contextSentence,
-        saveCount: 1
-      };
-
       if (!chrome.storage || !chrome.storage.local) {
         console.error("Storage API not available. Please reload the extension.");
         saveBtn.innerHTML = `Error: No Storage`;
@@ -297,34 +294,76 @@ function renderTooltipContent(container, word, definition, audioUrl, fullData, c
       }
 
       chrome.storage.local.get({ vocabList: [] }, (result) => {
-        const vocabList = result.vocabList || [];
-        const existingIndex = vocabList.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
+        let vocabList = result.vocabList || [];
         
+        // Find existing word
+        let existingIndex = vocabList.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
+        
+        const newSentence = {
+          text: contextSentence,
+          timestamp: Date.now()
+        };
+
         if (existingIndex === -1) {
-          vocabList.push(wordData);
-          chrome.storage.local.set({ vocabList: vocabList }, () => {
-            // Success animation
-            saveBtn.classList.add('vocab-saved');
-            saveBtn.innerHTML = `ʕ´• ᴥ•̥\`ʔ Saved!`;
-            
-            setTimeout(() => {
-              removeTooltip();
-            }, 2000);
+          // New word
+          vocabList.push({
+            word: word,
+            entries: [
+              {
+                definition: definition,
+                sentences: [newSentence]
+              }
+            ]
           });
+          existingIndex = vocabList.length - 1;
         } else {
-          vocabList[existingIndex].saveCount = (vocabList[existingIndex].saveCount || 1) + 1;
-          vocabList[existingIndex].timestamp = Date.now();
-          if (contextSentence) {
-            vocabList[existingIndex].context = contextSentence;
+          // Existing word
+          let wordItem = vocabList[existingIndex];
+          
+          // Migrate legacy format if needed
+          if (!wordItem.entries) {
+            wordItem.entries = [
+              {
+                definition: wordItem.definition,
+                sentences: [
+                  {
+                    text: wordItem.context || "",
+                    timestamp: wordItem.timestamp || Date.now()
+                  }
+                ]
+              }
+            ];
+            delete wordItem.definition;
+            delete wordItem.context;
+            delete wordItem.timestamp;
+            delete wordItem.audioUrl;
+            delete wordItem.saveCount;
           }
-          chrome.storage.local.set({ vocabList: vocabList }, () => {
-            saveBtn.classList.add('vocab-saved');
-            saveBtn.innerHTML = `Saved (${vocabList[existingIndex].saveCount} times)!`;
-            setTimeout(() => {
-              removeTooltip();
-            }, 2000);
-          });
+          
+          // Find matching definition
+          let defEntry = wordItem.entries.find(e => e.definition === definition);
+          if (defEntry) {
+            defEntry.sentences.push(newSentence);
+          } else {
+            wordItem.entries.push({
+              definition: definition,
+              sentences: [newSentence]
+            });
+          }
         }
+
+        chrome.storage.local.set({ vocabList: vocabList }, () => {
+          // Calculate new total save count
+          const wordItem = vocabList[existingIndex];
+          const totalSaves = wordItem.entries.reduce((sum, entry) => sum + entry.sentences.length, 0);
+          
+          saveBtn.classList.add('vocab-saved');
+          saveBtn.innerHTML = `Saved (${totalSaves})!`;
+          
+          setTimeout(() => {
+            removeTooltip();
+          }, 2000);
+        });
       });
     });
   }

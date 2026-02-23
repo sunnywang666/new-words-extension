@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7] - 2026-02-23
+### Added
+- **Contextual Auto-Selection**: The extension now automatically selects the most relevant dictionary definition based on the context sentence using a word-overlap algorithm.
+- **Minimalist UI**: The tooltip has been simplified to only display the selected word, the best-fit definition, and a dynamic save button.
+- **Nested Storage Schema**: The vocabulary book now groups saved sentences by their specific definition. If multiple sentences are saved for the same definition, only the newest is shown by default, with a "Show more" toggle for the rest.
+
+## [1.6] - 2026-02-23
+### Fixed
+- **Sentence Extraction Bug**: Fixed an issue where selecting a word wrapped in inline formatting tags (like `<b>`, `<i>`, `<strong>`) would fail to capture the full surrounding sentence. The extension now traverses up the DOM tree to find the nearest block-level element to extract the complete sentence.
+### Added
+- **Context Sentence Highlighting**: The saved word is now underlined and highlighted within the context sentence in the vocabulary book popup.
+
 ## [1.5] - 2026-02-23
 ### Added
 - **Context Sentence**: The extension now extracts and saves the original sentence where the word appeared. This context is displayed in the vocabulary book.

@@ -177,3 +177,11 @@
   border-left: 2px solid #e5e7eb;
   line-height: 1.4;
 }
+
+.vocab-highlight {
+  text-decoration: underline;
+  text-decoration-color: #3b82f6;
+  text-decoration-thickness: 2px;
+  font-weight: 600;
+  color: #1e293b;
+}
