@@ -178,10 +178,9 @@
   line-height: 1.4;
 }
 
-.vocab-highlight {
+mark {
+  background-color: #fef08a;
+  font-weight: bold;
   text-decoration: underline;
-  text-decoration-color: #3b82f6;
-  text-decoration-thickness: 2px;
-  font-weight: 600;
   color: #1e293b;
 }

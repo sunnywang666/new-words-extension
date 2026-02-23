@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8] - 2026-02-23
+### Fixed
+- **Sentence Extraction Bug**: Fixed an issue where the extension was grabbing truncated fragments instead of complete sentences. The extraction logic now uses a regular expression to extract the complete sentence containing the selected word from the closest block-level parent element.
+- **Context Sentence Highlighting**: The saved word is now highlighted with a yellow background (`<mark>`) within the context sentence in the vocabulary book popup.
+- **Auto-Selection Algorithm**: Enhanced the matching algorithm to remove common English stop words before comparing the context sentence with dictionary definitions. It now defaults to the most common Part of Speech (first entry) if the text-overlap score is too low or a tie.
+
 ## [1.7] - 2026-02-23
 ### Added
 - **Contextual Auto-Selection**: The extension now automatically selects the most relevant dictionary definition based on the context sentence using a word-overlap algorithm.

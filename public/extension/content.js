@@ -8,16 +8,27 @@
   function getContextSentence(word, text) {
     if (!text) return "";
     text = text.replace(/\s+/g, ' ').trim();
-    const index = text.toLowerCase().indexOf(word.toLowerCase());
-    if (index === -1) {
-      return text.length > 120 ? text.substring(0, 120) + "..." : text;
+    
+    // Split text into sentences using regex matching common sentence boundaries
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    
+    // Find the first sentence that contains the word
+    const wordRegex = new RegExp(`\\b${word}\\b`, 'i');
+    for (const sentence of sentences) {
+      if (wordRegex.test(sentence)) {
+        return sentence.trim();
+      }
     }
-    const start = Math.max(0, index - 50);
-    const end = Math.min(text.length, index + word.length + 50);
-    let result = text.substring(start, end);
-    if (start > 0) result = "..." + result;
-    if (end < text.length) result = result + "...";
-    return result;
+    
+    // Fallback if exact word boundary not found but substring exists
+    for (const sentence of sentences) {
+      if (sentence.toLowerCase().includes(word.toLowerCase())) {
+        return sentence.trim();
+      }
+    }
+    
+    // Ultimate fallback
+    return text.length > 120 ? text.substring(0, 120) + "..." : text;
   }
 
   document.addEventListener('mouseup', (event) => {

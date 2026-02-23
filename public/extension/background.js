@@ -15,25 +15,32 @@ function selectBestDefinition(data, contextSentence) {
   if (allDefs.length === 0) return "No definition available.";
   if (allDefs.length === 1 || !contextSentence) return allDefs[0];
 
-  // --- LLM API CALL PLACEHOLDER ---
-  // TODO: Replace this basic overlap algorithm with an LLM API call for perfect semantic matching.
-  // Example: const bestDef = await callLLM(contextSentence, allDefs);
-  // --------------------------------
+  // ============================================================================
+  // TODO: Replace this heuristic word-overlap algorithm with an LLM API call 
+  // (e.g., Gemini or OpenAI) for accurate semantic contextual matching.
+  // ============================================================================
+
+  const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'and', 'or', 'but', 'not', 'it', 'this', 'that', 'these', 'those', 'as', 'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'can', 'could', 'should', 'from', 'about', 'which', 'who', 'whom', 'whose', 'what', 'where', 'when', 'why', 'how', 'i', 'you', 'he', 'she', 'we', 'they', 'me', 'him', 'her', 'us', 'them']);
 
   // Basic word-overlap algorithm
-  const contextWords = new Set(contextSentence.toLowerCase().match(/\\b\\w+\\b/g) || []);
-  let bestDef = allDefs[0];
-  let maxOverlap = -1;
+  const contextWords = (contextSentence.toLowerCase().match(/\b\w+\b/g) || [])
+    .filter(w => !stopWords.has(w));
+  const contextSet = new Set(contextWords);
+
+  let bestDef = allDefs[0]; // Default to the most common (first) definition
+  let maxOverlap = 0; // Start at 0. If no overlap > 0, we keep the first definition.
 
   for (const def of allDefs) {
-    const defWords = def.toLowerCase().match(/\\b\\w+\\b/g) || [];
+    const defWords = (def.toLowerCase().match(/\b\w+\b/g) || [])
+      .filter(w => !stopWords.has(w));
+    
     let overlap = 0;
     for (const w of defWords) {
-      // Ignore very common short words
-      if (w.length > 3 && contextWords.has(w)) {
+      if (contextSet.has(w)) {
         overlap++;
       }
     }
+    
     if (overlap > maxOverlap) {
       maxOverlap = overlap;
       bestDef = def;
