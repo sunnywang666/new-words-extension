@@ -7,8 +7,15 @@
 </head>
 <body>
   <div class="header">
-    <h1>Vocabulary Book</h1>
-    <span id="word-count">0 words</span>
+    <div class="header-title-row">
+      <h1>Vocabulary Book</h1>
+      <span id="word-count">0 words</span>
+    </div>
+    <div class="header-actions">
+      <button id="export-btn" class="action-btn" title="Export to JSON">Export</button>
+      <button id="import-btn" class="action-btn" title="Import from JSON">Import</button>
+      <input type="file" id="import-file" accept=".json" style="display: none;">
+    </div>
   </div>
   <div id="vocab-list" class="vocab-list">
     <!-- Words will be injected here -->

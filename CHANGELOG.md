@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.3] - 2026-03-05
+### Added
+- **Import/Export Functionality**: You can now export your vocabulary list as a JSON file and import it back. This allows you to backup your data, sync across devices, or share your vocabulary list with others.
+
 ## [2.2] - 2026-02-23
 ### Added
 - **Vocabulary Book Audio Interaction**: The minimalist audio interaction has been extended to the Vocabulary Book popup. You can now click the saved words in the popup to play their pronunciation, with the same hover effect as the tooltip.

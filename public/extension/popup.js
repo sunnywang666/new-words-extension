@@ -10,6 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
       loadVocab();
     }
   });
+
+  // Export/Import Listeners
+  document.getElementById('export-btn').addEventListener('click', exportVocab);
+  document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file').click();
+  });
+  document.getElementById('import-file').addEventListener('change', importVocab);
 });
 
 function loadVocab() {
@@ -192,4 +199,86 @@ function deleteWord(word) {
       loadVocab();
     });
   });
+}
+
+function exportVocab() {
+  chrome.storage.local.get({ vocabList: [] }, (result) => {
+    const vocabList = result.vocabList || [];
+    if (vocabList.length === 0) {
+      alert('No words to export.');
+      return;
+    }
+    
+    const dataStr = JSON.stringify(vocabList, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    const date = new Date().toISOString().split('T')[0];
+    a.download = `vocab-export-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+}
+
+function importVocab(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      if (!Array.isArray(importedData)) {
+        throw new Error('Invalid format: Expected an array of words.');
+      }
+      
+      const validData = importedData.filter(item => item && item.word);
+      if (validData.length === 0) {
+        throw new Error('No valid words found in the file.');
+      }
+      
+      chrome.storage.local.get({ vocabList: [] }, (result) => {
+        let currentList = result.vocabList || [];
+        
+        validData.forEach(importedItem => {
+          const existingIndex = currentList.findIndex(item => item.word.toLowerCase() === importedItem.word.toLowerCase());
+          if (existingIndex === -1) {
+            currentList.push(importedItem);
+          } else {
+            let existingItem = currentList[existingIndex];
+            if (importedItem.entries) {
+              if (!existingItem.entries) existingItem.entries = [];
+              
+              importedItem.entries.forEach(impEntry => {
+                let exEntry = existingItem.entries.find(e => e.definition === impEntry.definition);
+                if (exEntry) {
+                  impEntry.sentences.forEach(impSent => {
+                    if (!exEntry.sentences.find(s => s.text === impSent.text)) {
+                      exEntry.sentences.push(impSent);
+                    }
+                  });
+                } else {
+                  existingItem.entries.push(impEntry);
+                }
+              });
+            }
+          }
+        });
+        
+        chrome.storage.local.set({ vocabList: currentList }, () => {
+          loadVocab();
+          alert(`Successfully imported ${validData.length} words!`);
+        });
+      });
+    } catch (error) {
+      alert(`Import failed: ${error.message}`);
+    }
+    
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }

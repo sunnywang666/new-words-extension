@@ -12,11 +12,17 @@ body {
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+.header-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .header h1 {
@@ -31,6 +37,28 @@ body {
   background: #f1f5f9;
   padding: 4px 8px;
   border-radius: 12px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.action-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
 }
 
 .vocab-list {
