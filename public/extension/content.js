@@ -229,6 +229,7 @@ function createTooltip(word, rect, contextSentence = "") {
 
     const data = response.data[0];
     const definition = response.bestDefinition || getFirstDefinition(data);
+    const audioUrl = getAudioUrl(data);
 
     // Query storage for save count
     chrome.storage.local.get({ vocabList: [] }, (result) => {
@@ -243,7 +244,7 @@ function createTooltip(word, rect, contextSentence = "") {
         saveCount = existingWordEntry.saveCount || 1;
       }
 
-      renderTooltipContent(container, word, definition, contextSentence, saveCount);
+      renderTooltipContent(container, word, definition, contextSentence, saveCount, audioUrl);
     });
   });
 }
@@ -282,18 +283,26 @@ function getAudioUrl(data) {
   }
 }
 
-function renderTooltipContent(container, word, definition, contextSentence, saveCount) {
+function renderTooltipContent(container, word, definition, contextSentence, saveCount, audioUrl) {
   const saveText = saveCount > 0 ? `Save (${saveCount})` : `Save`;
 
   container.innerHTML = `
     <div class="vocab-header">
-      <span class="vocab-word">${word}</span>
+      <span class="vocab-word" ${audioUrl ? 'title="Click to play audio"' : ''}>${word}</span>
     </div>
     <div class="vocab-def">${definition}</div>
     <div class="vocab-footer">
       <button class="vocab-save-btn">${saveText}</button>
     </div>
   `;
+
+  if (audioUrl) {
+    const wordEl = container.querySelector('.vocab-word');
+    const audio = new Audio(audioUrl);
+    wordEl.addEventListener('click', () => {
+      audio.play();
+    });
+  }
 
   const saveBtn = container.querySelector('.vocab-save-btn');
   if (saveBtn) {

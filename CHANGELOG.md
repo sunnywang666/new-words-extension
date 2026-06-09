@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.10] - 2026-02-23
+### Added
+- **Minimalist Audio Interaction**: You can now click the word in the tooltip to play its pronunciation. The word text changes color on hover to indicate it is clickable, keeping the UI clean without a visible speaker icon.
+
 ## [1.9] - 2026-02-23
 ### Changed
 - **Vocabulary Book UI Redesign**: Modernized the popup UI with a sophisticated highlight style (creamy off-white background with a subtle blue underscore), improved typography and visual hierarchy, softer card shadows, increased padding, and a subtler delete button.
