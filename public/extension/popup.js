@@ -131,7 +131,7 @@ function loadVocab() {
 
       itemEl.innerHTML = `
         <div class="vocab-item-header">
-          <h3 class="vocab-word">${item.word}</h3>
+          <h3 class="vocab-word" data-audio="${item.audioUrl || ''}" ${item.audioUrl ? 'title="Click to play audio"' : ''}>${item.word}</h3>
           <div class="vocab-meta">
             ${saveCountHtml}
             <span class="vocab-date">${date}</span>
@@ -148,6 +148,18 @@ function loadVocab() {
       listContainer.appendChild(itemEl);
     });
     
+    // Add audio listeners
+    document.querySelectorAll('.vocab-word').forEach(wordEl => {
+      const audioUrl = wordEl.getAttribute('data-audio');
+      if (audioUrl) {
+        wordEl.style.cursor = 'pointer';
+        wordEl.addEventListener('click', () => {
+          const audio = new Audio(audioUrl);
+          audio.play();
+        });
+      }
+    });
+
     // Add delete listeners
     document.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {

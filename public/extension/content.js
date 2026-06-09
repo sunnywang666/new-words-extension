@@ -331,6 +331,7 @@ function renderTooltipContent(container, baseWord, originalWord, definition, con
           // New word
           vocabList.push({
             word: baseWord,
+            audioUrl: audioUrl,
             entries: [
               {
                 definition: definition,
@@ -342,6 +343,9 @@ function renderTooltipContent(container, baseWord, originalWord, definition, con
         } else {
           // Existing word
           let wordItem = vocabList[existingIndex];
+          if (audioUrl && !wordItem.audioUrl) {
+            wordItem.audioUrl = audioUrl;
+          }
           
           // Migrate legacy format if needed
           if (!wordItem.entries) {

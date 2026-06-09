@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.2] - 2026-02-23
+### Added
+- **Vocabulary Book Audio Interaction**: The minimalist audio interaction has been extended to the Vocabulary Book popup. You can now click the saved words in the popup to play their pronunciation, with the same hover effect as the tooltip.
+
 ## [2.1] - 2026-02-23
 ### Added
 - **Lemmatization**: The extension now automatically sanitizes inflected words (e.g., "running", "cats") to their base form ("run", "cat") before querying the dictionary and saving. The vocabulary book groups words by their base form while preserving the original inflected word in the highlighted context sentence.
