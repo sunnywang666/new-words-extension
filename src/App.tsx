@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 
-const extensionBase = new URL('extension/', import.meta.env.BASE_URL).toString();
+const basePath = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
+const extensionBase = `${basePath}extension/`;
 
 function getExtensionAsset(path: string) {
-  return new URL(path, extensionBase).toString();
+  return `${extensionBase}${path}`;
 }
 
 const sampleWords = ['ephemeral', 'serendipity', 'ubiquitous', 'pragmatic', 'eloquent'];
