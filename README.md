@@ -1,20 +1,47 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# New Words Extension
 
-# Run and deploy your AI Studio app
+This repository contains:
 
-This contains everything you need to run your app locally.
+- the latest Chrome extension source in [`public/extension`](./public/extension)
+- a shareable online demo built with Vite + React
+- the project history reconstructed from your local milestone snapshots
 
-View your app in AI Studio: https://ai.studio/apps/87e21fde-fd23-41ca-b4fb-7cd8543c9593
+## Online Demo
 
-## Run Locally
+After GitHub Pages is enabled for this repository, the demo will be available at:
 
-**Prerequisites:**  Node.js
+`https://sunnywang666.github.io/new-words-extension/`
 
+The demo lets people:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- select a word and open the tooltip
+- fetch definitions from the Free Dictionary API
+- save words into the vocabulary book
+- preview the popup UI
+- test import/export behavior
+
+## Local Development
+
+Prerequisite: Node.js 20+
+
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Load As A Chrome Extension
+
+1. Open `chrome://extensions`
+2. Enable Developer mode
+3. Click `Load unpacked`
+4. Select the [`public/extension`](./public/extension) folder
+
+## Deploy To GitHub Pages
+
+This repo includes a GitHub Actions workflow that builds and deploys the Vite app to GitHub Pages on every push to `main`.
