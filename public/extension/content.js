@@ -230,11 +230,13 @@ function createTooltip(word, rect, contextSentence = "") {
     const data = response.data[0];
     const definition = response.bestDefinition || getFirstDefinition(data);
     const audioUrl = getAudioUrl(data);
+    const baseWord = response.baseWord || word;
+    const originalWord = response.originalWord || word;
 
     // Query storage for save count
     chrome.storage.local.get({ vocabList: [] }, (result) => {
       const vocabList = result.vocabList || [];
-      const existingWordEntry = vocabList.find(item => item.word.toLowerCase() === word.toLowerCase());
+      const existingWordEntry = vocabList.find(item => item.word.toLowerCase() === baseWord.toLowerCase());
       
       let saveCount = 0;
       if (existingWordEntry && existingWordEntry.entries) {
@@ -244,7 +246,7 @@ function createTooltip(word, rect, contextSentence = "") {
         saveCount = existingWordEntry.saveCount || 1;
       }
 
-      renderTooltipContent(container, word, definition, contextSentence, saveCount, audioUrl);
+      renderTooltipContent(container, baseWord, originalWord, definition, contextSentence, saveCount, audioUrl);
     });
   });
 }
@@ -283,12 +285,12 @@ function getAudioUrl(data) {
   }
 }
 
-function renderTooltipContent(container, word, definition, contextSentence, saveCount, audioUrl) {
+function renderTooltipContent(container, baseWord, originalWord, definition, contextSentence, saveCount, audioUrl) {
   const saveText = saveCount > 0 ? `Save (${saveCount})` : `Save`;
 
   container.innerHTML = `
     <div class="vocab-header">
-      <span class="vocab-word" ${audioUrl ? 'title="Click to play audio"' : ''}>${word}</span>
+      <span class="vocab-word" ${audioUrl ? 'title="Click to play audio"' : ''}>${baseWord}</span>
     </div>
     <div class="vocab-def">${definition}</div>
     <div class="vocab-footer">
@@ -317,17 +319,18 @@ function renderTooltipContent(container, word, definition, contextSentence, save
         let vocabList = result.vocabList || [];
         
         // Find existing word
-        let existingIndex = vocabList.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
+        let existingIndex = vocabList.findIndex(item => item.word.toLowerCase() === baseWord.toLowerCase());
         
         const newSentence = {
           text: contextSentence,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          originalWord: originalWord
         };
 
         if (existingIndex === -1) {
           // New word
           vocabList.push({
-            word: word,
+            word: baseWord,
             entries: [
               {
                 definition: definition,
@@ -348,7 +351,8 @@ function renderTooltipContent(container, word, definition, contextSentence, save
                 sentences: [
                   {
                     text: wordItem.context || "",
-                    timestamp: wordItem.timestamp || Date.now()
+                    timestamp: wordItem.timestamp || Date.now(),
+                    originalWord: wordItem.word
                   }
                 ]
               }
@@ -363,7 +367,13 @@ function renderTooltipContent(container, word, definition, contextSentence, save
           // Find matching definition
           let defEntry = wordItem.entries.find(e => e.definition === definition);
           if (defEntry) {
-            defEntry.sentences.push(newSentence);
+            // Prevent duplicate sentences
+            const existingSentence = defEntry.sentences.find(s => s.text === contextSentence);
+            if (existingSentence) {
+              existingSentence.timestamp = Date.now(); // Update timestamp
+            } else {
+              defEntry.sentences.push(newSentence);
+            }
           } else {
             wordItem.entries.push({
               definition: definition,

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1] - 2026-02-23
+### Added
+- **Lemmatization**: The extension now automatically sanitizes inflected words (e.g., "running", "cats") to their base form ("run", "cat") before querying the dictionary and saving. The vocabulary book groups words by their base form while preserving the original inflected word in the highlighted context sentence.
+### Fixed
+- **Duplicate Sentences**: Prevented the same example sentence from being saved multiple times under the same definition. Clicking "Save" on an already saved sentence now updates its timestamp instead of creating a duplicate.
+
 ## [1.10] - 2026-02-23
 ### Added
 - **Minimalist Audio Interaction**: You can now click the word in the tooltip to play its pronunciation. The word text changes color on hover to indicate it is clickable, keeping the UI clean without a visible speaker icon.

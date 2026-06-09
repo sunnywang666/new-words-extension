@@ -77,7 +77,9 @@ function loadVocab() {
         let sentencesHtml = '';
         if (sortedSentences.length > 0) {
           const firstSentence = sortedSentences[0];
-          const regex = new RegExp(`\\b(${item.word})\\b`, 'gi');
+          const highlightWord = firstSentence.originalWord || item.word;
+          const escapedWord = highlightWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`\\b(${escapedWord}[a-z]*)\\b`, 'gi');
           let highlightedContext = firstSentence.text ? firstSentence.text.replace(regex, '<mark>$1</mark>') : '';
           
           if (highlightedContext) {
@@ -88,7 +90,10 @@ function loadVocab() {
             let hiddenSentencesHtml = '';
             for (let i = 1; i < sortedSentences.length; i++) {
               const s = sortedSentences[i];
-              const h = s.text ? s.text.replace(regex, '<mark>$1</mark>') : '';
+              const hWord = s.originalWord || item.word;
+              const hEscaped = hWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const hRegex = new RegExp(`\\b(${hEscaped}[a-z]*)\\b`, 'gi');
+              const h = s.text ? s.text.replace(hRegex, '<mark>$1</mark>') : '';
               if (h) {
                 hiddenSentencesHtml += `<div class="vocab-context" style="margin-top: 4px;">"${h}"</div>`;
               }
